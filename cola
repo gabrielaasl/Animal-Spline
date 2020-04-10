@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Spline dog</title>
+    <style>
+        html,
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+        }
+    </style>
+</head>
+
+<body>
+    <script src="js/three.min.js"></script>
+    <script src="js/controls/OrbitControls.js"></script>
+    <script>
+        var scene, aspect, camera, renderer, controls;
+        var startTime = Date.now();
+        var fan;
+        var strip;
+        var tapa;
+        var camera, scene, renderer,
+            light1, light2, light3, light4,
+            object, stats;
+
+        var clock = new THREE.Clock();
+
+        class TRIANGLE_FAN {
+            constructor(Geometria) {
+                this.geometria = Geometria;
+                console.log(this.geometria);
+            }
+            draw() {
+                for (var i = 2; i < this.geometria.vertices.length; i++) {
+                    this.geometria.faces.push(new THREE.Face3(0, i - 1, i));
+                }
+                this.geometria.computeFaceNormals();
+                var materialExt = new THREE.MeshStandardMaterial({
+                    color: 0xAA3333,
+                    side: THREE.DoubleSide,
+                    metalness: 0.5,
+                    roughness: 0.1,
+
+                    transparent: false
+                });
+
+                var materialFan = new THREE.MeshLambertMaterial({
+                    color: 0x3333DD,
+                    side: THREE.DoubleSide
+                });
+                var fan = new THREE.Mesh(this.geometria, materialExt);
+                scene.add(fan);
+            }
+        }
+
+        class TRIANGLE_STRIP {
+            constructor(Geometria) {
+                this.geometria = Geometria;
+                console.log(this.geometria);
+            }
+            draw() {
+                for (var i = 2; i < this.geometria.vertices.length; i++) {
+                    this.geometria.faces.push(new THREE.Face3(i - 2, i - 1, i));
+                }
+                this.geometria.computeFaceNormals();
+                var materialStrip = new THREE.MeshLambertMaterial({
+                    color: 0x3333DD,
+                    side: THREE.DoubleSide
+                });
+                var strip = new THREE.Mesh(this.geometria, materialStrip);
+                scene.add(strip);
+            }
+        }
+
+        init();
+        animate();
+
+        function init() {
+            //INICIALIZACIÓN DE LA ESCENA
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0xAAAAAA);
+            aspect = window.innerWidth / window.innerHeight;
+            camera = new THREE.PerspectiveCamera(45, aspect, 0.1, 1000);
+            renderer = new THREE.WebGLRenderer();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            document.body.appendChild(renderer.domElement);
+            controls = new THREE.OrbitControls(camera, renderer.domElement);
+
+            //ELEMENTOS DE ESCENA
+            var size = 10;
+            var arrowSize = 1;
+            var divisions = size;
+            var origin = new THREE.Vector3(0, 0, 0);
+            var x = new THREE.Vector3(1, 0, 0);
+            var y = new THREE.Vector3(0, 1, 0);
+            var z = new THREE.Vector3(0, 0, 1);
+            var color1 = new THREE.Color(0xFFFFFF);
+            var color2 = new THREE.Color(0x333333);
+            var colorR = new THREE.Color(0xAA3333);
+            var colorG = new THREE.Color(0x33AA33);
+            var colorB = new THREE.Color(0x333366);
+            var colorRd = new THREE.Color(0xAA6666);
+            var colorGd = new THREE.Color(0x66AA66);
+            var colorBd = new THREE.Color(0x6666AA);
+
+            //CREAR LAS GRILLAS PARA EL ESCENARIO
+            var axesHelper = new THREE.AxesHelper(size);
+            var gridHelperXY = new THREE.GridHelper(size, divisions, color1, color1);
+            var gridHelperXZ = new THREE.GridHelper(size, divisions, color2, color2);
+            var gridHelperYZ = new THREE.GridHelper(size, divisions, color2, color2);
+
+            //ROTARLAS PARA QUE QUEDEN EN EL ESPACIO ADECUADO
+            gridHelperXY.rotateOnWorldAxis(x, THREE.Math.degToRad(90));
+            gridHelperXZ.rotateOnWorldAxis(y, THREE.Math.degToRad(90));
+            gridHelperYZ.rotateOnWorldAxis(z, THREE.Math.degToRad(90));
+
+            //CREAR LAS FLECHAS QUE INDICAN LOS EJES DE COORDENADAS 3D
+            var arrowX = new THREE.ArrowHelper(x, origin, arrowSize, colorR);
+            var arrowY = new THREE.ArrowHelper(y, origin, arrowSize, colorG);
+            var arrowZ = new THREE.ArrowHelper(z, origin, arrowSize, colorB);
+            //CREAR ILUMINACIÓN
+            var ambient = new THREE.AmbientLight(0xffffff, 1);
+            scene.add(ambient);
+
+            var pointLight1 = new THREE.PointLight(0xffffff, .2, 100);
+            pointLight1.position.set(1, 1, 1);
+            scene.add(pointLight1);
+
+            var pointLight2 = new THREE.PointLight(0xffffff, .5, 100);
+            pointLight2.position.set(2, 2, 2);
+            scene.add(pointLight2);
+
+            var CURVA1 = new THREE.Geometry();
+            var CURVA2 = new THREE.Geometry();
+
+            var curve2D = new THREE.CatmullRomCurve3([
+                //new THREE.Vector3( -0.004, -0.557, 0.851 ),
+                new THREE.Vector3(0, 1.402, 0.501),
+
+                new THREE.Vector3(-0.015, 1.557, 0.258),
+
+                new THREE.Vector3(0, 1.667, -0.020),
+
+                new THREE.Vector3(0, 1.083, -0.511),
+
+                new THREE.Vector3(0, -0.505, -0.760),
+
+                new THREE.Vector3(0, -1.170, -0.211),
+                new THREE.Vector3(0, -1.217, 0.335),
+                new THREE.Vector3(-0.004, -0.557, 0.850)
+
+            ]);
+            curve2D.closed = true;
+
+            var curve2D2 = new THREE.CatmullRomCurve3([
+                //new THREE.Vector3( -0.004, -0.557, 0.851 ),
+                new THREE.Vector3(-0.362, -0.670, 0.675),
+                new THREE.Vector3(-0.124, 1.508, 0.452),
+                new THREE.Vector3(-0.246, 1.59, 0.155),
+                new THREE.Vector3(-0.094, 1.208, -0.466),
+                new THREE.Vector3(-0.112, -0.342, -0.785),
+                new THREE.Vector3(-0.214, -0.710, -0.636),
+                new THREE.Vector3(-0.420, -1.130, 0.099)
+
+
+            ]);
+            curve2D2.closed = true;
+
+            var curve3 = new THREE.CatmullRomCurve3([
+                new THREE.Vector3(-0.524, -0.549, -0.617),
+                new THREE.Vector3(-0.425, 1.596, -0.076),
+                new THREE.Vector3(-0.439, 1.028, -0.365),
+                new THREE.Vector3(-0.424, -0.201, -0.686)
+
+
+            ])
+            curve3.closed = true;
+
+            var curve4 = new THREE.CatmullRomCurve3([
+                //new THREE.Vector3( -0.004, -0.557, 0.851 ),
+                new THREE.Vector3(0.362, -0.670, 0.675),
+                new THREE.Vector3(0.124, 1.508, 0.452),
+                new THREE.Vector3(0.246, 1.59, 0.155),
+                new THREE.Vector3(0.094, 1.208, -0.466),
+                new THREE.Vector3(0.112, -0.342, -0.785),
+                new THREE.Vector3(0.214, -0.710, -0.636),
+                new THREE.Vector3(0.420, -1.130, 0.099)
+
+
+            ]);
+            curve4.closed = true;
+
+            var curve5 = new THREE.CatmullRomCurve3([
+                new THREE.Vector3(0.524, -0.549, -0.617),
+                new THREE.Vector3(0.425, 1.596, -0.076),
+                new THREE.Vector3(0.439, 1.028, -0.365),
+                new THREE.Vector3(0.424, -0.201, -0.686)
+
+
+            ])
+            curve5.closed = true;
+
+            var VOSAL = [];
+            VOSAL[0] = new THREE.Vector3(0, -2, 1.09);
+            VOSAL[1] = new THREE.Vector3(0.16, -1.89, 1.09);
+            VOSAL[2] = new THREE.Vector3(0.18, 1.93, 0.79);
+            VOSAL[3] = new THREE.Vector3(0, 1.94, 0.85);
+            VOSAL[4] = new THREE.Vector3(-0.16, -1.89, 1.09);
+            VOSAL[5] = new THREE.Vector3(-0.18, 1.93, 0.79);
+
+
+
+            var shape = new THREE.Shape();
+            shape.splineThru(VOSAL);
+
+            var material = new THREE.LineBasicMaterial({
+                color: 0xff0000
+            });
+            var resolution = 150;
+            var points = shape.getPoints(resolution);
+
+            var geometry = new THREE.BufferGeometry().setFromPoints(points);
+
+            // Create the final object to add to the scene
+            var curveObject = new THREE.Line(geometry, material);
+
+
+            //EXTRUDE
+
+            var extrudeSettings = {
+                steps: 30,
+                amount: 3,
+                bevelEnabled: true,
+            };
+
+            var geometryExt = new THREE.ExtrudeGeometry(shape, extrudeSettings);
+
+
+            var materialExt = new THREE.MeshStandardMaterial({
+                color: 0xAA3333,
+                metalness: 0.5,
+                roughness: 0.1,
+                opacity: 0.75,
+                transparent: false
+            });
+
+
+            var mesh = new THREE.Mesh(geometryExt, materialExt);
+
+            var mesh2 = new THREE.Mesh(geometryExt, materialExt);
+
+            var mesh3 = new THREE.Mesh(geometryExt, materialExt);
+
+
+
+            var material = new THREE.LineBasicMaterial({
+                color: 0xff0000
+            });
+
+            var resolution = 10;
+
+            var points = curve2D.getPoints(resolution);
+            var points2 = curve2D2.getPoints(resolution);
+            var points3 = curve3.getPoints(resolution);
+            var points4 = curve4.getPoints(resolution);
+            var points5 = curve5.getPoints(resolution);
+
+            var geometry = new THREE.BufferGeometry().setFromPoints(points);
+            var geometry2 = new THREE.BufferGeometry().setFromPoints(points2);
+            var geometry3 = new THREE.BufferGeometry().setFromPoints(points3);
+            var geometry4 = new THREE.BufferGeometry().setFromPoints(points4);
+            var geometry5 = new THREE.BufferGeometry().setFromPoints(points5);
+
+            // Create the final object to add to the scene
+
+            var curveObject = new THREE.Line(geometry, material);
+            var curveObject2 = new THREE.Line(geometry2, material);
+            var curveObject3 = new THREE.Line(geometry3, material);
+            var curveObject4 = new THREE.Line(geometry4, material);
+            var curveObject5 = new THREE.Line(geometry5, material);
+
+
+
+            var pointGeometry = new THREE.Geometry();
+            var pointGeometry2 = new THREE.Geometry();
+            for (var i = 0; i < 100; i++) {
+                var point = curve2D.getPoint(i / 100);
+                pointGeometry.vertices.push(point);
+            }
+
+            for (var i = 0; i < 100; i++) {
+                var point = curve2D2.getPoint(i / 100);
+                pointGeometry.vertices.push(point);
+            }
+            for (var i = 0; i < 100; i++) {
+                var point = curve3.getPoint(i / 100);
+                pointGeometry.vertices.push(point);
+            }
+            for (var i = 0; i < 100; i++) {
+                var point = curve2D.getPoint(i / 100);
+                pointGeometry2.vertices.push(point);
+            }
+            for (var i = 0; i < 100; i++) {
+                var point = curve4.getPoint(i / 100);
+                pointGeometry2.vertices.push(point);
+            }
+            for (var i = 0; i < 100; i++) {
+                var point = curve5.getPoint(i / 100);
+                pointGeometry2.vertices.push(point);
+            }
+            var material = new THREE.MeshLambertMaterial({
+                color: 0x00cc00
+            });
+            material.side = THREE.DoubleSide;
+
+            var pointMaterial = new THREE.PointsMaterial({
+                color: 0x00FF00,
+                size: 0.1
+            });
+            pointMaterial.side = THREE.DoubleSide;
+
+
+            var curvePoints = new THREE.Points(pointGeometry, pointMaterial);
+            var curvePoints2 = new THREE.Points(pointGeometry2, pointMaterial);
+
+
+            for (var i = 0; i < 190; i++) {
+                var face1 = new THREE.Face3(i, i + 1, i + 100);
+                pointGeometry.faces.push(face1);
+                var face2 = new THREE.Face3(i + 1, i + 100, i + 101);
+                pointGeometry.faces.push(face2);
+            }
+            for (var i = 0; i < 190; i++) {
+                var face1 = new THREE.Face3(i, i + 1, i + 100);
+                pointGeometry2.faces.push(face1);
+                var face2 = new THREE.Face3(i + 1, i + 100, i + 101);
+                pointGeometry2.faces.push(face2);
+            }
+
+            pointGeometry2.computeFaceNormals();
+            pointGeometry2.computeVertexNormals();
+            pointGeometry.computeFaceNormals();
+            pointGeometry.computeVertexNormals();
+
+            fan = new TRIANGLE_FAN(pointGeometry);
+            fan.draw();
+            fan = new TRIANGLE_FAN(pointGeometry2);
+            fan.draw();
+
+
+            scene.add(new THREE.Mesh(pointGeometry, material));
+            /*scene.add( curveObject );
+             scene.add( curveObject2 );
+             scene.add( curveObject3 );
+             scene.add( curveObject4 );
+             scene.add( curveObject5 );*/
+
+            curveObject.rotateX(Math.PI / 2);
+            curveObject2.rotateX(Math.PI / 2);
+            curveObject3.rotateX(Math.PI / 2);
+            curveObject4.rotateX(Math.PI / 2);
+            curveObject5.rotateX(Math.PI / 2);
+
+            pointGeometry.rotateX(Math.PI / 2);
+            pointGeometry2.rotateX(Math.PI / 2);
+
+            mesh.scale.y -= 1.07;
+            mesh.scale.z -= 1.07;
+            mesh.scale.x -= 1.07;
+            mesh.translateZ(-1.25);
+            mesh.translateY(1);
+
+            mesh2.scale.y -= 1.04;
+            mesh2.scale.z -= 1.07;
+            mesh2.scale.x -= 1.07;
+            mesh2.translateZ(-1.5);
+            mesh2.translateY(0.8);
+
+            mesh3.scale.y -= 1.05;
+            mesh3.scale.z -= 1.1;
+            mesh3.scale.x -= 1.07;
+            mesh3.translateZ(-1);
+            mesh3.translateY(0.5);
+            mesh3.rotateX(Math.PI / 4)
+
+            //COLA  - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  - - - - - - - -- - - - - - - - - - - - - - - - -- - - - 
+            var material = new THREE.LineBasicMaterial({
+                color: 0xff0000
+            });
+
+            var curveC1 = new THREE.CatmullRomCurve3([
+                new THREE.Vector3(0, 1.85, 1.9),
+                new THREE.Vector3(0, 1.47, 1.81),
+                new THREE.Vector3(0, 1.09, 1.85),
+                new THREE.Vector3(0, 0.7, 1.8),
+                new THREE.Vector3(0, 0.09, 1.43)
+
+
+            ])
+
+            var extrudeSettings = {
+                steps: 10,
+                bevelEnabled: false,
+                extrudePath: curveC1
+            };
+
+
+            var pts = [],
+                count = 15;
+
+            for (var i = 0; i < count; i++) {
+
+                var l = 0.12;
+
+                var a = 2 * i / count * Math.PI;
+
+                pts.push(new THREE.Vector4(Math.cos(a) * l, Math.sin(a) * l));
+
+            }
+
+            var shape = new THREE.Shape(pts);
+
+            var geometryC = new THREE.ExtrudeBufferGeometry(shape, extrudeSettings);
+
+
+            var mesh4 = new THREE.Mesh(geometryC, materialExt);
+            var sphereGeometry = new THREE.SphereGeometry(0.12, 32, 32);
+            var sphere = new THREE.Mesh(sphereGeometry, materialExt);
+            sphere.position.x = 0;
+            sphere.position.y = 1.85;
+            sphere.position.z = 1.9;
+
+            //PatasFrente
+
+            var curvePF1 = new THREE.CatmullRomCurve3([
+                new THREE.Vector3(-0.20, -0.52, -0.67),
+                new THREE.Vector3(-0.20, -1.02, -0.75),
+                new THREE.Vector3(-0.20, -1.36, -0.79),
+                new THREE.Vector3(-0.20, -1.55, -0.86),
+                new THREE.Vector3(-0.20, -1.60, -0.92)
+
+            ])
+
+            var extrudeSettings = {
+                steps: 3,
+                bevelEnabled: false,
+                extrudePath: curvePF1
+            };
+
+
+            var pts1 = [],
+                count = 10;
+
+            for (var i = 0; i < count; i++) {
+
+                var l = 0.15;
+
+                var a = 2 * i / count * Math.PI;
+
+                pts1.push(new THREE.Vector4(Math.cos(a) * l, Math.sin(a) * l));
+
+            }
+
+            var shape2 = new THREE.Shape(pts1);
+            var geometryPF = new THREE.ExtrudeBufferGeometry(shape2, extrudeSettings);
+            var PataF1 = new THREE.Mesh(geometryPF, materialExt);
+
+
+            var curvePF2 = new THREE.CatmullRomCurve3([
+                new THREE.Vector3(0.20, -0.52, -0.67),
+                new THREE.Vector3(0.20, -1.02, -0.75),
+                new THREE.Vector3(0.20, -1.36, -0.79),
+                new THREE.Vector3(0.20, -1.55, -0.86),
+                new THREE.Vector3(0.20, -1.60, -0.92)
+
+            ])
+
+            var extrudeSettings2 = {
+                steps: 3,
+                bevelEnabled: false,
+                extrudePath: curvePF2
+            };
+
+            var pts3 = [],
+                count = 7;
+
+            for (var i = 0; i < count; i++) {
+
+                var l = 0.15;
+
+                var a = 2 * i / count * Math.PI;
+
+                pts3.push(new THREE.Vector4(Math.cos(a) * l, Math.sin(a) * l));
+
+            }
+
+            var shape3 = new THREE.Shape(pts3);
+            var geometryPF2 = new THREE.ExtrudeBufferGeometry(shape3, extrudeSettings2);
+            var PataF2 = new THREE.Mesh(geometryPF2, materialExt);
+
+            //Patas Traseras
+
+            /*var curvePF23 = new THREE.CatmullRomCurve3([
+                new THREE.Vector3(0.20, -0.52, -0.67),
+                new THREE.Vector3(0.20, -1.02, -0.75),
+                new THREE.Vector3(0.20, -1.36, -0.79),
+                new THREE.Vector3(0.20, -1.55, -0.86),
+                new THREE.Vector3(0.20, -1.60, -0.92)
+
+            ])
+
+            var pointGeometry3P = new THREE.Geometry();
+            for (var i = 5; i < 20; i++) {
+                var pointP = curvePF23.getPoint(i / 100);
+                pointGeometry3P.vertices.push(pointP);
+            }
+
+            for (var i = 0; i < 190; i++) {
+                var faceP1 = new THREE.Face3(i, i + 1, i + 100);
+                pointGeometry3P.faces.push(faceP1);
+                var faceP2 = new THREE.Face3(i + 1, i + 100, i + 101);
+                pointGeometry3P.faces.push(faceP2);
+            }
+            pointGeometry3P.computeFaceNormals();
+            pointGeometry3P.computeVertexNormals();
+
+            fan = new TRIANGLE_FAN(pointGeometry3P);
+            fan.draw();
+            scene.add(new THREE.Mesh(pointGeometry3P, material)); */
+
+            //AGREGAR A LA ESCENA
+            scene.add(gridHelperXZ);
+            scene.add(gridHelperYZ);
+            scene.add(arrowX);
+            scene.add(arrowY);
+            scene.add(arrowZ);
+            //Cabeza
+            scene.add(mesh);
+            scene.add(mesh2);
+            scene.add(mesh3);
+            //COLA
+            scene.add(mesh4);
+            scene.add(sphere);
+            //Patas
+            scene.add(PataF1);
+            scene.add(PataF2);
+
+
+            //MOVER LA CÁMARA
+            camera.position.x = 5;
+            camera.position.y = 5;
+            camera.position.z = 10;
+            camera.lookAt(origin);
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            controls.update();
+            render();
+        }
+
+        function render() {
+            renderer.render(scene, camera);
+        }
+    </script>
+</body>
+
+</html>
