@@ -32,11 +32,20 @@
                     this.geometria.faces.push(new THREE.Face3(0, i - 1, i));
                 }
                 this.geometria.computeFaceNormals();
+                var materialExt= new THREE.MeshStandardMaterial( { 
+				color: 0xAA3333,
+                     side: THREE.DoubleSide,
+				metalness: 0.5, 
+				roughness: 0.1,
+				
+				transparent: false			
+			} );
+            	
                 var materialFan = new THREE.MeshLambertMaterial({
                     color: 0x3333DD,
                     side: THREE.DoubleSide
                 });
-                var fan = new THREE.Mesh(this.geometria, materialFan);
+                var fan = new THREE.Mesh(this.geometria, materialExt);
                 scene.add(fan);
             }
         }
@@ -139,7 +148,7 @@
             
             ] );
             curve2D.closed = true;
-            
+                    
             var curve2D2 = new THREE.CatmullRomCurve3( [
                 //new THREE.Vector3( -0.004, -0.557, 0.851 ),
                 new THREE.Vector3( -0.362, -0.670, 0.675 ),
@@ -188,9 +197,60 @@
                 ])
             curve5.closed = true;
                    
+               var VOSAL = [];
+                VOSAL[0] = new THREE.Vector3( 0,-2,1.09 );
+                VOSAL[1] = new THREE.Vector3( 0.16, -1.89,1.09 );
+                VOSAL[2] = new THREE.Vector3( 0.18,1.93, 0.79 );
+                VOSAL[3] = new THREE.Vector3( 0,1.94,0.85 );
+                VOSAL[4] = new THREE.Vector3( -0.16, -1.89,1.09 );
+                VOSAL[5] = new THREE.Vector3( -0.18,1.93, 0.79 );
+                
+
+                
+            var shape = new THREE.Shape();             
+			shape.splineThru(VOSAL);
+           
+            var material = new THREE.LineBasicMaterial( { color : 0xff0000 } );
+            var resolution = 150;
+            var points = shape.getPoints( resolution );
+           
+            var geometry = new THREE.BufferGeometry().setFromPoints( points );
+           
+            // Create the final object to add to the scene
+            var curveObject = new THREE.Line( geometry, material );
+           
+            
+			//EXTRUDE
+			
+            var extrudeSettings = {
+				steps: 30,
+				amount: 3,
+				bevelEnabled: true,
+			};
+
+			var geometryExt = new THREE.ExtrudeGeometry( shape, extrudeSettings );
+            	
+			
+            	 var materialExt= new THREE.MeshStandardMaterial( { 
+				color: 0xAA3333, 
+				metalness: 0.5, 
+				roughness: 0.1,
+				opacity: 0.75,
+				transparent: false			
+			} );
+            
+			
+			var mesh = new THREE.Mesh( geometryExt, materialExt ) ;
+			         
+            var mesh2 = new THREE.Mesh( geometryExt, materialExt ) ;
+                         
+            var mesh3 = new THREE.Mesh( geometryExt, materialExt ) ;
+           
+             
             
             var material = new THREE.LineBasicMaterial( { color : 0xff0000 } );
-			var resolution = 99999;
+			
+            var resolution = 10;
             
             var points = curve2D.getPoints( resolution );
             var points2 = curve2D2.getPoints( resolution );
@@ -241,14 +301,16 @@
                 var point = curve5.getPoint( i/100 );
                 pointGeometry2.vertices.push( point );
             }
-
+            var material = new THREE.MeshLambertMaterial ( { color : 0x00cc00 } );
+            material.side = THREE.DoubleSide;
+          
             var pointMaterial = new THREE.PointsMaterial ( { color: 0x00FF00, size:0.1 } );
              pointMaterial.side = THREE.DoubleSide;
+           
+            
             var curvePoints = new THREE.Points( pointGeometry, pointMaterial );
             var curvePoints2 = new THREE.Points( pointGeometry2, pointMaterial );
             
-            var material = new THREE.MeshLambertMaterial ( { color : 0x00cc00 } );
-            material.side = THREE.DoubleSide;
           
             for(var i=0; i<190; i++){
                 var face1 = new THREE.Face3( i, i+1, i+100 );
@@ -265,7 +327,6 @@
           
             pointGeometry2.computeFaceNormals();
             pointGeometry2.computeVertexNormals();
-            
             pointGeometry.computeFaceNormals();
             pointGeometry.computeVertexNormals();
             
@@ -276,22 +337,42 @@
            
           
             scene.add( new THREE.Mesh( pointGeometry, material ) );
-            scene.add( curveObject );
+            /*scene.add( curveObject );
              scene.add( curveObject2 );
              scene.add( curveObject3 );
              scene.add( curveObject4 );
-             scene.add( curveObject5 );
-            curveObject.rotateX(3.14/2);
-            curveObject2.rotateX(3.14/2);
-            curveObject3.rotateX(3.14/2);
-            curveObject4.rotateX(3.14/2);
-            curveObject5.rotateX(3.14/2);
-            pointGeometry.rotateX(3.14/2);
-            pointGeometry2.rotateX(3.14/2);
+             scene.add( curveObject5 );*/
             
+            curveObject.rotateX(Math.PI/2);
+            curveObject2.rotateX(Math.PI/2);
+            curveObject3.rotateX(Math.PI/2);
+            curveObject4.rotateX(Math.PI/2);
+            curveObject5.rotateX(Math.PI/2);
+           
+            pointGeometry.rotateX(Math.PI/2);
+            pointGeometry2.rotateX(Math.PI/2);
+           
+            mesh.scale.y-=1.07;
+            mesh.scale.z-=1.07;
+            mesh.scale.x-=1.07;
+            mesh.translateZ(-1.25);
+            mesh.translateY(1);
+
+            mesh2.scale.y-=1.04;
+            mesh2.scale.z-=1.07;
+            mesh2.scale.x-=1.07;
+            mesh2.translateZ(-1.5);
+            mesh2.translateY(0.8);
             
-            scene.add( curvePoints );
-            scene.add( curvePoints2 );
+            mesh3.scale.y-=1.05;
+            mesh3.scale.z-=1.1;
+            mesh3.scale.x-=1.07;
+            mesh3.translateZ(-1);
+            mesh3.translateY(0.5);
+            mesh3.rotateX(Math.PI/4)
+            
+           // scene.add( curvePoints );
+            //scene.add( curvePoints2 );
 
 		  	//AGREGAR A LA ESCENA
             scene.add( gridHelperXZ );
@@ -299,7 +380,9 @@
 		  	scene.add( arrowX );	
 		  	scene.add( arrowY );	
 		  	scene.add( arrowZ );
-          
+            scene.add( mesh );
+            scene.add( mesh2 );
+            scene.add( mesh3 );
             
             
 			//MOVER LA CÁMARA
